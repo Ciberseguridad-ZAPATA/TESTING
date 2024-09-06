@@ -1,0 +1,53 @@
+name: Deploy to Local IIS
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # Utiliza un runner auto-hospedado
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Define paths
+        run: |
+          # Define paths
+          $env:SOURCE_PATH = "D:\test\*"
+          $env:DESTINATION_PATH = "C:\inetpub\wwwroot\IIS"
+          # Output the paths for debugging
+          Write-Host "Source Path: $env:SOURCE_PATH"
+          Write-Host "Destination Path: $env:DESTINATION_PATH"
+        shell: powershell
+
+      - name: Validate directories
+        run: |
+          # Check if source directory exists
+          if (-Not (Test-Path -Path $env:SOURCE_PATH)) {
+            Write-Host "Source directory does not exist."
+            exit 1
+          }
+          # Check if destination directory exists
+          if (-Not (Test-Path -Path $env:DESTINATION_PATH)) {
+            Write-Host "Destination directory does not exist. Creating it."
+            New-Item -ItemType Directory -Path $env:DESTINATION_PATH -Force
+          }
+        shell: powershell
+
+      - name: Copy files to IIS directory
+        run: |
+          # Copiar archivos
+          try {
+            Copy-Item -Path $env:SOURCE_PATH -Destination $env:DESTINATION_PATH -Recurse -Force
+            Write-Host "Files copied successfully."
+          } catch {
+            Write-Host "An error occurred while copying files."
+            exit 1
+          }
+        shell: powershell
